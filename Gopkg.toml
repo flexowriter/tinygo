@@ -1,5 +1,5 @@
 [[constraint]]
-  branch = "master"
+  branch = "travis-updates"
   name = "github.com/aykevl/go-llvm"
 
 [[constraint]]

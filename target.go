@@ -189,6 +189,9 @@ func LoadTarget(target string) (*TargetSpec, error) {
 			return nil, errors.New("expected a full LLVM target or a custom target in -target flag")
 		}
 		goos := tripleSplit[2]
+		if strings.HasPrefix(goos, "darwin") {
+			goos = "darwin"
+		}
 		goarch := map[string]string{ // map from LLVM arch to Go arch
 			"i386":    "386",
 			"x86_64":  "amd64",

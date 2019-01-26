@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  branch = "master"
-  digest = "1:3611159788efdd4e0cfae18b6ebcccbad25a2815968b0e4323b42647d201031a"
+  branch = "travis-updates"
+  digest = "1:3b0820159f45ab8252663ccfcfc97c5c46ac65c8953c35ef0b5fe1569217993b"
   name = "github.com/aykevl/go-llvm"
   packages = ["."]
   pruneopts = "UT"
-  revision = "f420620d1a0f54417a5712260153fe861780d030"
+  revision = "e7f41d7721852084fa17b1cd7780a76d4454ee4d"
 
 [[projects]]
   branch = "master"

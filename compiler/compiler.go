@@ -162,6 +162,8 @@ func (c *Compiler) Compile(mainPath string) error {
 		gopath = runtime.GOROOT() + string(filepath.ListSeparator) + gopath
 	}
 
+	println("goos, goarch:", c.GOOS, c.GOARCH)
+	fmt.Println("build tags:", c.BuildTags)
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
