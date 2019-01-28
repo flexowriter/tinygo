@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"tinygo.org/x/go-llvm"
+	"github.com/aykevl/go-llvm"
 	"github.com/aykevl/tinygo/ir"
 	"github.com/aykevl/tinygo/loader"
 	"golang.org/x/tools/go/ssa"
@@ -58,6 +58,8 @@ type Compiler struct {
 	targetData              llvm.TargetData
 	intType                 llvm.Type
 	i8ptrType               llvm.Type // for convenience
+	funcPtrType             llvm.Type // *uint8 with func ptr address space
+	funcPtrAddrSpace        int
 	uintptrType             llvm.Type
 	initFuncs               []llvm.Value
 	interfaceInvokeWrappers []interfaceInvokeWrapper
@@ -122,8 +124,9 @@ func NewCompiler(pkgName string, config Config) (*Compiler, error) {
 	} else {
 		panic("unknown pointer size")
 	}
+	c.funcPtrAddrSpace = (llvm.FunctionType(llvm.VoidType(), nil, false)).PointerAddressSpace()
+	c.funcPtrType = llvm.PointerType(c.ctx.Int8Type(), c.funcPtrAddrSpace)
 	c.i8ptrType = llvm.PointerType(c.ctx.Int8Type(), 0)
-
 	return c, nil
 }
 
@@ -431,6 +434,11 @@ func (c *Compiler) getLLVMType(goType types.Type) (llvm.Type, error) {
 	case *types.Map:
 		return llvm.PointerType(c.mod.GetTypeByName("runtime.hashmap"), 0), nil
 	case *types.Named:
+		if typ.Obj().Id() == "runtime.funcPtr" {
+			// Magic type that is a *uint8 but in the address space of function
+			// pointers.
+			return c.funcPtrType, nil
+		}
 		if _, ok := typ.Underlying().(*types.Struct); ok {
 			llvmType := c.mod.GetTypeByName(typ.Obj().Pkg().Path() + "." + typ.Obj().Name())
 			if llvmType.IsNil() {
@@ -494,7 +502,7 @@ func (c *Compiler) getLLVMType(goType types.Type) (llvm.Type, error) {
 		// {context, funcptr}
 		paramTypes = append(paramTypes, c.i8ptrType) // context
 		paramTypes = append(paramTypes, c.i8ptrType) // parent coroutine
-		ptr := llvm.PointerType(llvm.FunctionType(returnType, paramTypes, false), 0)
+		ptr := llvm.PointerType(llvm.FunctionType(returnType, paramTypes, false), c.funcPtrAddrSpace)
 		ptr = c.ctx.StructType([]llvm.Type{c.i8ptrType, ptr}, false)
 		return ptr, nil
 	case *types.Slice:
@@ -1995,7 +2003,10 @@ func (c *Compiler) parseExpr(frame *Frame, expr ssa.Value) (llvm.Value, error) {
 
 			// Bounds check.
 			// LLVM optimizes this away in most cases.
-			length := c.builder.CreateExtractValue(value, 1, "len")
+			length, err := c.parseBuiltin(frame, []ssa.Value{expr.X}, "len", expr.Pos())
+			if err != nil {
+				return llvm.Value{}, err // shouldn't happen
+			}
 			c.emitBoundsCheck(frame, length, index, expr.Index.Type())
 
 			// Lookup byte

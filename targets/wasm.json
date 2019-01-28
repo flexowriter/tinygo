@@ -3,7 +3,7 @@
 	"build-tags":    ["js", "wasm"],
 	"goos":          "js",
 	"goarch":        "wasm",
-	"compiler":      "clang-7",
+	"compiler":      "clang-8",
 	"linker":        "ld.lld-7",
 	"cflags": [
 		"--target=wasm32",

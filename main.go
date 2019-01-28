@@ -22,7 +22,7 @@ import (
 
 var commands = map[string]string{
 	"ar":    "ar",
-	"clang": "clang-7",
+	"clang": "clang-8",
 }
 
 type BuildConfig struct {

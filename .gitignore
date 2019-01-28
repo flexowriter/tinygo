@@ -9,4 +9,3 @@ src/device/stm32/*.go
 src/device/stm32/*.s
 src/device/sam/*.go
 src/device/sam/*.s
-vendor
